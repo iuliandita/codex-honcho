@@ -149,23 +149,3 @@ bun install
 bun test
 bun run sync -- --recent 1 --dry-run
 ```
-
-## Publish
-
-The package name `codex-honcho` publishes to npm. One npm publish makes it available
-through `npm install`, `npx`, `bun add`, and `bunx`.
-
-```bash
-npm login
-bun run prepublishOnly
-npm pack --dry-run
-npm publish
-```
-
-Publishing requires an npm account with 2FA or a granular publish token. After publish,
-users can run:
-
-```bash
-bunx codex-honcho
-npx -y codex-honcho
-```

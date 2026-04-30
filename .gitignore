@@ -6,6 +6,7 @@ node_modules/
 !.env.example
 state/
 *.log
+.codex
 
 # OS/editor noise
 .DS_Store
