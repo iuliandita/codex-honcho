@@ -43,12 +43,12 @@ describe("parseCodexSessionJsonl", () => {
       createdAt: "2026-04-30T10:01:00.000Z",
       lineNumber: 2,
     });
-    expect(parsed.events[0].metadata.codex_local_images).toEqual(["/tmp/a.png"]);
+    expect(parsed.events[0]!.metadata.codex_local_images).toEqual(["/tmp/a.png"]);
     expect(parsed.events[1]).toMatchObject({
       role: "assistant",
       content: "hi",
     });
-    expect(parsed.events[1].metadata.codex_phase).toBe("final");
+    expect(parsed.events[1]!.metadata.codex_phase).toBe("final");
   });
 
   test("skips malformed lines and empty messages", () => {

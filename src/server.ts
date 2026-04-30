@@ -74,7 +74,7 @@ function loadConfig(): {
     (raw.endpoint?.environment === "local" ? LOCAL_URL : PROD_URL);
 
   const codexBlock = raw.hosts?.codex ?? {};
-  const workspace = codexBlock.workspace ?? "machine";
+  const workspace = codexBlock.workspace ?? "default";
   const aiPeer = codexBlock.aiPeer ?? "codex";
   const peerName = raw.peerName ?? process.env.USER ?? "user";
 
@@ -309,7 +309,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         });
         const saved =
           Array.isArray(conclusions) && conclusions.length > 0
-            ? conclusions[0].content
+            ? conclusions[0]!.content
             : content;
         return { content: [{ type: "text", text: `Saved conclusion: ${saved}` }] };
       }

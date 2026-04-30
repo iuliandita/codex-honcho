@@ -20,7 +20,11 @@ Honcho under a `codex` peer and remain searchable across tools.
 
 ## Install
 
-Clone the repo and install dependencies:
+For normal MCP use, no fixed checkout location is required. Configure Codex to run the
+package directly from npm with Bun.
+
+If you want to work on the source or run the systemd installer script, clone the repo
+wherever you keep local source:
 
 ```bash
 git clone https://github.com/iuliandita/codex-honcho.git
@@ -39,16 +43,19 @@ Create `~/.honcho/config.json`:
   },
   "hosts": {
     "codex": {
-      "workspace": "machine",
+      "workspace": "replace-with-your-workspace-id",
       "aiPeer": "codex"
     }
   },
+  "sessionStrategy": "per-directory",
   "sessionPeerPrefix": true,
   "observationMode": "unified"
 }
 ```
 
-You can also omit `apiKey` and set `HONCHO_API_KEY` in the environment.
+Use a stable `workspace` value for this machine or project group, for example
+`laptop`, `workstation`, or `personal-codex`. You can also omit `apiKey` and set
+`HONCHO_API_KEY` in the environment.
 
 ## Wire Codex MCP
 
@@ -56,8 +63,16 @@ Add this to `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.honcho]
-command = "bun"
-args = ["run", "/absolute/path/to/codex-honcho/src/server.ts"]
+command = "bunx"
+args = ["codex-honcho"]
+```
+
+The equivalent npm runner form is:
+
+```toml
+[mcp_servers.honcho]
+command = "npx"
+args = ["-y", "codex-honcho"]
 ```
 
 Restart Codex after editing the config.
@@ -67,13 +82,13 @@ Restart Codex after editing the config.
 Import recent sessions once:
 
 ```bash
-bun run sync -- --recent 20
+bunx --package codex-honcho codex-honcho-sync --recent 20
 ```
 
 Run continuously:
 
 ```bash
-bun run sync:watch
+bunx --package codex-honcho codex-honcho-sync --watch --recent 50
 ```
 
 Install a user-level systemd service:
@@ -133,4 +148,24 @@ retrieving Honcho context.
 bun install
 bun test
 bun run sync -- --recent 1 --dry-run
+```
+
+## Publish
+
+The package name `codex-honcho` publishes to npm. One npm publish makes it available
+through `npm install`, `npx`, `bun add`, and `bunx`.
+
+```bash
+npm login
+bun run prepublishOnly
+npm pack --dry-run
+npm publish
+```
+
+Publishing requires an npm account with 2FA or a granular publish token. After publish,
+users can run:
+
+```bash
+bunx codex-honcho
+npx -y codex-honcho
 ```

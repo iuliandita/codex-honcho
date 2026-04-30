@@ -52,7 +52,7 @@ function loadConfig(): RuntimeConfig {
   return {
     apiKey,
     baseUrl: raw.endpoint?.baseUrl ?? (raw.endpoint?.environment === "local" ? LOCAL_URL : PROD_URL),
-    workspace: codexBlock.workspace ?? "machine",
+    workspace: codexBlock.workspace ?? "default",
     peerName: raw.peerName ?? process.env.USER ?? "user",
     aiPeer: codexBlock.aiPeer ?? "codex",
     sessionPeerPrefix: raw.sessionPeerPrefix !== false,
@@ -70,10 +70,17 @@ function parseArgs(argv: string[]): CliOptions {
     statePath: DEFAULT_STATE_PATH,
   };
 
+  const nextArg = (index: number, flag: string): string => {
+    const value = argv[index + 1];
+    if (!value) throw new Error(`Missing value for ${flag}`);
+    return value;
+  };
+
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--file") {
-      options.files.push(resolve(argv[++i]));
+      options.files.push(resolve(nextArg(i, arg)));
+      i += 1;
     } else if (arg === "--all") {
       options.all = true;
     } else if (arg === "--recent") {
@@ -85,7 +92,8 @@ function parseArgs(argv: string[]): CliOptions {
     } else if (arg === "--interval-ms") {
       options.intervalMs = Number.parseInt(argv[++i] ?? "", 10);
     } else if (arg === "--state") {
-      options.statePath = resolve(argv[++i]);
+      options.statePath = resolve(nextArg(i, arg));
+      i += 1;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
