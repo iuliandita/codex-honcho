@@ -1,0 +1,42 @@
+{
+  "name": "codex-honcho",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Codex adapter for Honcho MCP with local transcript sync",
+  "main": "src/server.ts",
+  "bin": {
+    "codex-honcho-mcp": "src/server.ts",
+    "codex-honcho-sync": "src/sync-codex-sessions.ts"
+  },
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "mcp": "bun run src/server.ts",
+    "sync": "bun run src/sync-codex-sessions.ts",
+    "sync:watch": "bun run src/sync-codex-sessions.ts --watch --recent 50",
+    "test": "bun test"
+  },
+  "keywords": [
+    "codex",
+    "honcho",
+    "mcp",
+    "model-context-protocol",
+    "memory"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iuliandita/codex-honcho.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iuliandita/codex-honcho/issues"
+  },
+  "homepage": "https://github.com/iuliandita/codex-honcho#readme",
+  "license": "MIT",
+  "dependencies": {
+    "@honcho-ai/sdk": "^2.1.0",
+    "@modelcontextprotocol/sdk": "^1.26.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.1"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "apiKey": "replace-with-your-honcho-api-key-or-use-HONCHO_API_KEY",
+  "peerName": "your-name",
+  "endpoint": {
+    "baseUrl": "https://api.honcho.dev/v3"
+  },
+  "hosts": {
+    "codex": {
+      "workspace": "machine",
+      "aiPeer": "codex"
+    }
+  },
+  "sessionStrategy": "per-directory",
+  "sessionPeerPrefix": true,
+  "observationMode": "unified"
+}

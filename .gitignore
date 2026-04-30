@@ -1,0 +1,13 @@
+node_modules/
+
+# Local credentials and generated state
+.env
+.env.*
+!.env.example
+state/
+*.log
+
+# OS/editor noise
+.DS_Store
+.idea/
+.vscode/
