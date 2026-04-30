@@ -14,22 +14,36 @@ Honcho under a `codex` peer and remain searchable across tools.
 
 ## Requirements
 
-- Bun
+- Bun. The package entrypoints are TypeScript files with a Bun shebang, so Bun is
+  still the runtime when launched through `npx`, `pnpm dlx`, or `bunx`.
 - Codex CLI
 - A Honcho API key or self-hosted Honcho endpoint
 
 ## Install
 
-For normal MCP use, no fixed checkout location is required. Configure Codex to run the
-package directly from npm with Bun.
-
-If you want to work on the source or run the systemd installer script, clone the repo
-wherever you keep local source:
+For normal MCP use, no checkout is required. Use a package runner in your MCP
+configuration:
 
 ```bash
-git clone https://github.com/iuliandita/codex-honcho.git
-cd codex-honcho
-bun install
+bunx --package codex-honcho codex-honcho
+npx -y codex-honcho
+pnpm dlx codex-honcho
+```
+
+Or install the command globally:
+
+```bash
+bun install --global codex-honcho
+npm install --global codex-honcho
+pnpm add --global codex-honcho
+```
+
+After a global install, the commands are:
+
+```bash
+codex-honcho
+codex-honcho-mcp
+codex-honcho-sync
 ```
 
 Create `~/.honcho/config.json`:
@@ -59,20 +73,36 @@ Use a stable `workspace` value for this machine or project group, for example
 
 ## Wire Codex MCP
 
-Add this to `~/.codex/config.toml`:
+Recommended `bunx` config for `~/.codex/config.toml`:
 
 ```toml
 [mcp_servers.honcho]
 command = "bunx"
-args = ["codex-honcho"]
+args = ["--package", "codex-honcho", "codex-honcho"]
 ```
 
-The equivalent npm runner form is:
+Equivalent `npx` config:
 
 ```toml
 [mcp_servers.honcho]
 command = "npx"
 args = ["-y", "codex-honcho"]
+```
+
+Equivalent `pnpm dlx` config:
+
+```toml
+[mcp_servers.honcho]
+command = "pnpm"
+args = ["dlx", "codex-honcho"]
+```
+
+If you installed the package globally:
+
+```toml
+[mcp_servers.honcho]
+command = "codex-honcho"
+args = []
 ```
 
 Restart Codex after editing the config.
@@ -83,12 +113,16 @@ Import recent sessions once:
 
 ```bash
 bunx --package codex-honcho codex-honcho-sync --recent 20
+npx -y --package codex-honcho codex-honcho-sync --recent 20
+pnpm dlx --package codex-honcho codex-honcho-sync --recent 20
 ```
 
 Run continuously:
 
 ```bash
 bunx --package codex-honcho codex-honcho-sync --watch --recent 50
+npx -y --package codex-honcho codex-honcho-sync --watch --recent 50
+pnpm dlx --package codex-honcho codex-honcho-sync --watch --recent 50
 ```
 
 Install a user-level systemd service:
@@ -105,7 +139,7 @@ The importer stores dedupe state at:
 
 ## How Sessions Are Named
 
-The sync process imports Codex session JSONL files into Honcho sessions named:
+The MCP server and sync process use the same Honcho session name:
 
 ```text
 codex-<cwd-basename>
@@ -145,6 +179,8 @@ retrieving Honcho context.
 ## Development
 
 ```bash
+git clone https://github.com/iuliandita/codex-honcho.git
+cd codex-honcho
 bun install
 bun test
 bun run sync -- --recent 1 --dry-run

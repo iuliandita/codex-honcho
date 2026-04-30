@@ -27,7 +27,8 @@ import {
 import { Honcho } from "@honcho-ai/sdk";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { resolve, basename } from "node:path";
+import { resolve } from "node:path";
+import { getServerSessionName } from "./server-session";
 
 const CONFIG_PATH = resolve(homedir(), ".honcho/config.json");
 
@@ -59,13 +60,17 @@ function loadConfig(): {
   try {
     raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) as FileConfig;
   } catch (e) {
-    console.error(`[codex-honcho] cannot read ${CONFIG_PATH}: ${(e as Error).message}`);
+    console.error(
+      `[codex-honcho] cannot read ${CONFIG_PATH}: ${(e as Error).message}`,
+    );
     process.exit(1);
   }
 
   const apiKey = process.env.HONCHO_API_KEY ?? raw.apiKey;
   if (!apiKey) {
-    console.error("[codex-honcho] missing HONCHO_API_KEY (env or config.apiKey)");
+    console.error(
+      "[codex-honcho] missing HONCHO_API_KEY (env or config.apiKey)",
+    );
     process.exit(1);
   }
 
@@ -88,16 +93,6 @@ function loadConfig(): {
     reasoningLevel: raw.reasoningLevel ?? "medium",
     sessionPeerPrefix: raw.sessionPeerPrefix !== false,
   };
-}
-
-function sanitizeForSessionName(s: string): string {
-  return s.replace(/[^a-zA-Z0-9_-]/g, "-").replace(/^-+|-+$/g, "") || "session";
-}
-
-function getSessionName(cwd: string, peerName: string, withPrefix: boolean): string {
-  const repo = sanitizeForSessionName(basename(cwd));
-  const peer = sanitizeForSessionName(peerName);
-  return withPrefix ? `${peer}-${repo}` : repo;
 }
 
 const cfg = loadConfig();
@@ -135,11 +130,15 @@ const TOOLS = [
   },
   {
     name: "create_conclusion",
-    description: "Save a key insight or biographical detail about the user to Honcho's memory",
+    description:
+      "Save a key insight or biographical detail about the user to Honcho's memory",
     inputSchema: {
       type: "object",
       properties: {
-        content: { type: "string", description: "The insight or fact to remember" },
+        content: {
+          type: "string",
+          description: "The insight or fact to remember",
+        },
       },
       required: ["content"],
     },
@@ -151,14 +150,21 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        page: { type: "number", description: "Page number (1-indexed, default 1)" },
-        size: { type: "number", description: "Results per page (max 100, default 20)" },
+        page: {
+          type: "number",
+          description: "Page number (1-indexed, default 1)",
+        },
+        size: {
+          type: "number",
+          description: "Results per page (max 100, default 20)",
+        },
       },
     },
   },
   {
     name: "delete_conclusion",
-    description: "Delete a conclusion from Honcho's memory by ID. Use list_conclusions to find the ID first.",
+    description:
+      "Delete a conclusion from Honcho's memory by ID. Use list_conclusions to find the ID first.",
     inputSchema: {
       type: "object",
       properties: {
@@ -174,13 +180,17 @@ const TOOLS = [
     inputSchema: {
       type: "object",
       properties: {
-        max_conclusions: { type: "number", description: "Max conclusions to include (default 25)" },
+        max_conclusions: {
+          type: "number",
+          description: "Max conclusions to include (default 25)",
+        },
       },
     },
   },
   {
     name: "get_representation",
-    description: "Retrieve the user's representation string from Honcho. Lighter-weight than get_context.",
+    description:
+      "Retrieve the user's representation string from Honcho. Lighter-weight than get_context.",
     inputSchema: { type: "object", properties: {} },
   },
   {
@@ -191,11 +201,13 @@ const TOOLS = [
 ];
 
 const server = new Server(
-  { name: "codex-honcho", version: "0.1.0" },
+  { name: "codex-honcho", version: "0.1.1" },
   { capabilities: { tools: {} } },
 );
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: TOOLS,
+}));
 
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name } = req.params;
@@ -204,16 +216,21 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   // Configure once per call, mirroring plugin's per-call resolution.
   const userPeer = await honcho.peer(cfg.peerName);
   const aiPeer =
-    cfg.observationMode === "directional" ? await honcho.peer(cfg.aiPeer) : null;
+    cfg.observationMode === "directional"
+      ? await honcho.peer(cfg.aiPeer)
+      : null;
   const activePeer = cfg.observationMode === "unified" ? userPeer : aiPeer!;
-  const chatTarget = cfg.observationMode === "unified" ? undefined : cfg.peerName;
+  const chatTarget =
+    cfg.observationMode === "unified" ? undefined : cfg.peerName;
   const contextTarget = chatTarget;
 
   // Peer-only tools (no session needed).
   if (name === "list_conclusions" || name === "delete_conclusion") {
     try {
       const scopePeer =
-        cfg.observationMode === "unified" ? userPeer : await honcho.peer(cfg.aiPeer);
+        cfg.observationMode === "unified"
+          ? userPeer
+          : await honcho.peer(cfg.aiPeer);
       const conclusionScope = scopePeer.conclusionsOf(cfg.peerName);
 
       if (name === "list_conclusions") {
@@ -230,7 +247,12 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
             {
               type: "text",
               text: JSON.stringify(
-                { items, total: result.total, page: result.page, pages: result.pages },
+                {
+                  items,
+                  total: result.total,
+                  page: result.page,
+                  pages: result.pages,
+                },
                 null,
                 2,
               ),
@@ -268,7 +290,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
               observationMode: cfg.observationMode,
               endpoint: { type: "custom", url: cfg.baseUrl },
               shim: "codex-honcho",
-              shimVersion: "0.1.0",
+              shimVersion: "0.1.1",
             },
             null,
             2,
@@ -279,7 +301,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   }
 
   // Session-scoped tools.
-  const sessionName = getSessionName(process.cwd(), cfg.peerName, cfg.sessionPeerPrefix);
+  const sessionName = getServerSessionName(process.cwd(), cfg);
 
   try {
     const session = await honcho.session(sessionName);
@@ -298,20 +320,26 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           peerId: msg.peer ?? msg.peer_id,
           createdAt: msg.createdAt ?? msg.created_at,
         }));
-        return { content: [{ type: "text", text: JSON.stringify(results, null, 2) }] };
+        return {
+          content: [{ type: "text", text: JSON.stringify(results, null, 2) }],
+        };
       }
 
       case "create_conclusion": {
         const content = args.content as string;
-        const conclusions = await activePeer.conclusionsOf(cfg.peerName).create({
-          content,
-          sessionId: session.id,
-        });
+        const conclusions = await activePeer
+          .conclusionsOf(cfg.peerName)
+          .create({
+            content,
+            sessionId: session.id,
+          });
         const saved =
           Array.isArray(conclusions) && conclusions.length > 0
             ? conclusions[0]!.content
             : content;
-        return { content: [{ type: "text", text: `Saved conclusion: ${saved}` }] };
+        return {
+          content: [{ type: "text", text: `Saved conclusion: ${saved}` }],
+        };
       }
 
       case "get_context": {
@@ -321,14 +349,17 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           maxConclusions,
           includeMostFrequent: true,
         } as any);
-        return { content: [{ type: "text", text: JSON.stringify(ctx, null, 2) }] };
+        return {
+          content: [{ type: "text", text: JSON.stringify(ctx, null, 2) }],
+        };
       }
 
       case "get_representation": {
         const rep = await activePeer.representation(
           contextTarget ? ({ target: contextTarget } as any) : undefined,
         );
-        const text = typeof rep === "string" ? rep : JSON.stringify(rep, null, 2);
+        const text =
+          typeof rep === "string" ? rep : JSON.stringify(rep, null, 2);
         return { content: [{ type: "text", text }] };
       }
 

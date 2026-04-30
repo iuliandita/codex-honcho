@@ -1,12 +1,13 @@
 {
   "name": "codex-honcho",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "Codex adapter for Honcho MCP with local transcript sync",
   "main": "src/server.ts",
   "files": [
     "src/codex-log.ts",
+    "src/server-session.ts",
     "src/server.ts",
     "src/sync-codex-sessions.ts",
     "examples",
