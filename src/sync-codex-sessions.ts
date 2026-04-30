@@ -1,9 +1,20 @@
 #!/usr/bin/env bun
 import { Honcho } from "@honcho-ai/sdk";
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { getCodexHonchoSessionName, parseCodexSessionJsonl, type CodexTranscriptEvent } from "./codex-log";
+import {
+  getCodexHonchoSessionName,
+  parseCodexSessionJsonl,
+  type CodexTranscriptEvent,
+} from "./codex-log";
 
 type FileConfig = {
   apiKey?: string;
@@ -13,7 +24,7 @@ type FileConfig = {
   sessionPeerPrefix?: boolean;
 };
 
-type RuntimeConfig = {
+export type RuntimeConfig = {
   apiKey: string;
   baseUrl: string;
   workspace: string;
@@ -22,7 +33,7 @@ type RuntimeConfig = {
   sessionPeerPrefix: boolean;
 };
 
-type SyncState = {
+export type SyncState = {
   importedEventIds: Record<string, true>;
 };
 
@@ -38,7 +49,10 @@ type CliOptions = {
 
 const CONFIG_PATH = resolve(homedir(), ".honcho/config.json");
 const DEFAULT_CODEX_SESSIONS_DIR = resolve(homedir(), ".codex/sessions");
-const DEFAULT_STATE_PATH = resolve(homedir(), ".honcho/codex-honcho/state/codex-session-sync.json");
+const DEFAULT_STATE_PATH = resolve(
+  homedir(),
+  ".honcho/codex-honcho/state/codex-session-sync.json",
+);
 const PROD_URL = "https://api.honcho.dev/v3";
 const LOCAL_URL = "http://localhost:8000/v3";
 const MAX_MESSAGE_CHARS = 24000;
@@ -46,12 +60,15 @@ const MAX_MESSAGE_CHARS = 24000;
 function loadConfig(): RuntimeConfig {
   const raw = JSON.parse(readFileSync(CONFIG_PATH, "utf-8")) as FileConfig;
   const apiKey = process.env.HONCHO_API_KEY ?? raw.apiKey;
-  if (!apiKey) throw new Error(`Missing HONCHO_API_KEY or apiKey in ${CONFIG_PATH}`);
+  if (!apiKey)
+    throw new Error(`Missing HONCHO_API_KEY or apiKey in ${CONFIG_PATH}`);
 
   const codexBlock = raw.hosts?.codex ?? {};
   return {
     apiKey,
-    baseUrl: raw.endpoint?.baseUrl ?? (raw.endpoint?.environment === "local" ? LOCAL_URL : PROD_URL),
+    baseUrl:
+      raw.endpoint?.baseUrl ??
+      (raw.endpoint?.environment === "local" ? LOCAL_URL : PROD_URL),
     workspace: codexBlock.workspace ?? "default",
     peerName: raw.peerName ?? process.env.USER ?? "user",
     aiPeer: codexBlock.aiPeer ?? "codex",
@@ -99,8 +116,10 @@ function parseArgs(argv: string[]): CliOptions {
     }
   }
 
-  if (!Number.isFinite(options.recent) || options.recent < 1) options.recent = 20;
-  if (!Number.isFinite(options.intervalMs) || options.intervalMs < 1000) options.intervalMs = 5000;
+  if (!Number.isFinite(options.recent) || options.recent < 1)
+    options.recent = 20;
+  if (!Number.isFinite(options.intervalMs) || options.intervalMs < 1000)
+    options.intervalMs = 5000;
   return options;
 }
 
@@ -136,7 +155,9 @@ function saveState(path: string, state: SyncState): void {
 
 function formatError(error: unknown): string {
   if (error instanceof Error) {
-    const body = (error as any).body ? ` body=${JSON.stringify((error as any).body)}` : "";
+    const body = (error as any).body
+      ? ` body=${JSON.stringify((error as any).body)}`
+      : "";
     return `${error.name}: ${error.message}${body}`;
   }
   try {
@@ -150,7 +171,11 @@ function eventPeer(event: CodexTranscriptEvent, cfg: RuntimeConfig): string {
   return event.role === "user" ? cfg.peerName : cfg.aiPeer;
 }
 
-function truncateForHoncho(content: string): { content: string; truncated: boolean; originalLength: number } {
+function truncateForHoncho(content: string): {
+  content: string;
+  truncated: boolean;
+  originalLength: number;
+} {
   if (content.length <= MAX_MESSAGE_CHARS) {
     return { content, truncated: false, originalLength: content.length };
   }
@@ -162,22 +187,33 @@ function truncateForHoncho(content: string): { content: string; truncated: boole
   };
 }
 
-async function syncFile(
+export async function syncFile(
   honcho: Honcho,
   cfg: RuntimeConfig,
   state: SyncState,
   filePath: string,
   dryRun: boolean,
 ): Promise<number> {
-  const parsed = parseCodexSessionJsonl(readFileSync(filePath, "utf-8"), filePath);
+  const parsed = parseCodexSessionJsonl(
+    readFileSync(filePath, "utf-8"),
+    filePath,
+  );
   if (!parsed.meta?.cwd || parsed.events.length === 0) return 0;
 
-  const newEvents = parsed.events.filter((event) => !state.importedEventIds[event.eventId]);
+  const newEvents = parsed.events.filter(
+    (event) => !state.importedEventIds[event.eventId],
+  );
   if (newEvents.length === 0) return 0;
 
-  const sessionName = getCodexHonchoSessionName(parsed.meta.cwd, cfg.aiPeer, cfg.sessionPeerPrefix);
+  const sessionName = getCodexHonchoSessionName(
+    parsed.meta.cwd,
+    cfg.aiPeer,
+    cfg.sessionPeerPrefix,
+  );
   if (dryRun) {
-    console.log(`[dry-run] ${filePath}: would import ${newEvents.length} messages into ${sessionName}`);
+    console.log(
+      `[dry-run] ${filePath}: would import ${newEvents.length} messages into ${sessionName}`,
+    );
     return newEvents.length;
   }
 
@@ -212,13 +248,14 @@ async function syncFile(
   const batchSize = 25;
   for (let i = 0; i < messages.length; i += batchSize) {
     await session.addMessages(messages.slice(i, i + batchSize));
+    for (const event of newEvents.slice(i, i + batchSize)) {
+      state.importedEventIds[event.eventId] = true;
+    }
   }
 
-  for (const event of newEvents) {
-    state.importedEventIds[event.eventId] = true;
-  }
-
-  console.log(`${filePath}: imported ${newEvents.length} messages into ${sessionName}`);
+  console.log(
+    `${filePath}: imported ${newEvents.length} messages into ${sessionName}`,
+  );
   return newEvents.length;
 }
 
@@ -235,7 +272,10 @@ async function runOnce(options: CliOptions): Promise<number> {
   const files =
     options.files.length > 0
       ? options.files
-      : walkJsonlFiles(DEFAULT_CODEX_SESSIONS_DIR).slice(0, options.all ? undefined : options.recent);
+      : walkJsonlFiles(DEFAULT_CODEX_SESSIONS_DIR).slice(
+          0,
+          options.all ? undefined : options.recent,
+        );
 
   let imported = 0;
   for (const file of files) {
@@ -255,15 +295,20 @@ async function main(): Promise<void> {
   do {
     try {
       const imported = await runOnce(options);
-      if (imported === 0 && !options.watch) console.log("No new Codex messages to import.");
+      if (imported === 0 && !options.watch)
+        console.log("No new Codex messages to import.");
     } catch (error) {
       console.error(formatError(error));
       if (!options.watch) process.exitCode = 1;
     }
 
     if (!options.watch) return;
-    await new Promise((resolveSleep) => setTimeout(resolveSleep, options.intervalMs));
+    await new Promise((resolveSleep) =>
+      setTimeout(resolveSleep, options.intervalMs),
+    );
   } while (true);
 }
 
-await main();
+if (import.meta.main) {
+  await main();
+}
