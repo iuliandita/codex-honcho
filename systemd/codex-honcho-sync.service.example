@@ -4,8 +4,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/absolute/path/to/codex-honcho
-ExecStart=/usr/bin/env bun run src/sync-codex-sessions.ts --watch --recent 50
+ExecStart=/usr/bin/env bunx --package codex-honcho codex-honcho-sync --watch --recent 50
 Restart=on-failure
 RestartSec=10
 

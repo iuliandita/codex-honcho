@@ -5,7 +5,18 @@
   "type": "module",
   "description": "Codex adapter for Honcho MCP with local transcript sync",
   "main": "src/server.ts",
+  "files": [
+    "src/codex-log.ts",
+    "src/server.ts",
+    "src/sync-codex-sessions.ts",
+    "examples",
+    "scripts",
+    "systemd",
+    "README.md",
+    "LICENSE"
+  ],
   "bin": {
+    "codex-honcho": "src/server.ts",
     "codex-honcho-mcp": "src/server.ts",
     "codex-honcho-sync": "src/sync-codex-sessions.ts"
   },
@@ -14,7 +25,10 @@
     "mcp": "bun run src/server.ts",
     "sync": "bun run src/sync-codex-sessions.ts",
     "sync:watch": "bun run src/sync-codex-sessions.ts --watch --recent 50",
-    "test": "bun test"
+    "check": "tsc --noEmit",
+    "test": "bun test",
+    "prepublishOnly": "bun run check && bun test && bun audit --audit-level=moderate",
+    "pack:dry-run": "npm pack --dry-run"
   },
   "keywords": [
     "codex",
@@ -32,11 +46,19 @@
   },
   "homepage": "https://github.com/iuliandita/codex-honcho#readme",
   "license": "MIT",
+  "packageManager": "bun@1.3.11",
+  "engines": {
+    "bun": ">=1.1.39"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {
     "@honcho-ai/sdk": "^2.1.0",
     "@modelcontextprotocol/sdk": "^1.26.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.1"
+    "@types/bun": "^1.3.1",
+    "typescript": "^6.0.3"
   }
 }

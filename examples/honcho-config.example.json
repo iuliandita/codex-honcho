@@ -6,7 +6,7 @@
   },
   "hosts": {
     "codex": {
-      "workspace": "machine",
+      "workspace": "replace-with-your-workspace-id",
       "aiPeer": "codex"
     }
   },
