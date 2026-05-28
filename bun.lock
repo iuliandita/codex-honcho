@@ -15,7 +15,7 @@
     },
   },
   "packages": {
-    "@honcho-ai/sdk": ["@honcho-ai/sdk@2.1.1", "", { "dependencies": { "zod": "4.0.0" } }, "sha512-1EgDchnK2bTllhUCNhH1PZbw65fExmTtY2sraqXc1O41o1gY4Rpqrl1XCo+7RfdcZo85N7vl461hqYCouhbR1A=="],
+    "@honcho-ai/sdk": ["@honcho-ai/sdk@2.1.2", "", { "dependencies": { "zod": "4.0.0" } }, "sha512-+aRpqK1UgRk0b21RYsQy6OeSXTHARQwPcC4Tv+dSR2QFA2q0kM9oUqPBuGG8boiRBrag7DTthx8g1E/Nwoz7OQ=="],
 
     "@hono/node-server": ["@hono/node-server@1.19.14", "", { "peerDependencies": { "hono": "^4" } }, "sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw=="],
 
